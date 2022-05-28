@@ -58,7 +58,7 @@ class Playground:
 
 width = 50
 height = 50
-rect_size = 5
+rect_size = 10
 
 pygame.init()
 # 初始化
@@ -72,6 +72,7 @@ playground = Playground(width, height)
 
 direction = random.randint(0, 3)
 reward = [random.randint(0, width-1), random.randint(0, height-1)]
+score = 0
 clock = pygame.time.Clock()
 while True:
     clock.tick(10)
@@ -96,7 +97,6 @@ while True:
             else:
                 pass
 
-    direction = random.randint(0, 3)
     screen.fill(COLOR_SEASHELL)
     print(snake.body, reward)
     snake.set_direction(direction)
@@ -106,6 +106,7 @@ while True:
         break
 
     if snake.head == reward:
+        score += 1
         snake.grow_up()
         print("grow up!")
         reward = [random.randint(0, width-1), random.randint(0, height-1)]
@@ -114,4 +115,7 @@ while True:
         pygame.draw.rect(screen, COLOR_NAVYBLUE, [coord[0]*rect_size, coord[1]*rect_size, rect_size, rect_size])
     pygame.draw.rect(screen, COLOR_NAVYBLUE, [reward[0]*rect_size, reward[1]*rect_size, rect_size, rect_size])
     pygame.draw.lines(screen, COLOR_BLACK, closed=False, points=[[0, 0], [0, height*rect_size], [width*rect_size, height*rect_size], [width*rect_size, 0], [0, 0]], width=1)
+    font = pygame.font.SysFont(f"score: {score}", 5 * rect_size)
+    img = font.render(f"score: {score}", True, COLOR_NAVYBLUE)
+    screen.blit(img, (0, height*rect_size*90//100))
     pygame.display.update()
