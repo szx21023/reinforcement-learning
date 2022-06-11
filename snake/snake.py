@@ -115,6 +115,7 @@ while True:
         pygame.draw.rect(screen, COLOR_NAVYBLUE, [coord[0]*rect_size, coord[1]*rect_size, rect_size, rect_size])
     pygame.draw.rect(screen, COLOR_NAVYBLUE, [reward[0]*rect_size, reward[1]*rect_size, rect_size, rect_size])
     pygame.draw.lines(screen, COLOR_BLACK, closed=False, points=[[0, 0], [0, height*rect_size], [width*rect_size, height*rect_size], [width*rect_size, 0], [0, 0]], width=1)
+    # score board
     font = pygame.font.SysFont(f"score: {score}", 5 * rect_size)
     img = font.render(f"score: {score}", True, COLOR_NAVYBLUE)
     screen.blit(img, (0, height*rect_size*90//100))
