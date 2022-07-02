@@ -4,6 +4,9 @@ class Action:
         self.code = code
         self.direction = direction
 
+    def __str__(self):
+        return f'{self.name}'
+
 ACTIONS = [
     Action('up', 0, [-1, 0]),
     Action('down', 1, [1, 0]),

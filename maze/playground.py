@@ -33,18 +33,18 @@ while True:
     agent.position = [0, 0]
     while True:
         clock.tick(20)
-        a_index = agent.get_next_step(agent.position)
-        direction = ACTIONS[a_index].direction
+        action = agent.get_next_step(agent.position)
+        direction = action.direction
         new_position = [agent.position[0] + direction[0], agent.position[1] + direction[1]]
         if maze.out_of_boundary(*new_position):
             reward = -50
-            agent.learn(agent.position, a_index, reward)
+            agent.learn(agent.position, action.code, reward)
             print('game over!')
             break
 
         reward = reward_table[tuple(new_position)]
-        print(agent.position, a_index, reward)
-        agent.learn(agent.position, a_index, reward, new_position)
+        print(agent.position, action, reward)
+        agent.learn(agent.position, action.code, reward, new_position)
         agent.position = new_position
         if maze.reward_point == new_position:
             print('get reward!')

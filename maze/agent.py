@@ -25,6 +25,9 @@ class Agent:
     def get_next_step(self, pos: list) -> int:
         pos = tuple(pos)
         if self.gamma > random.random():
-            return random.choice(self.actions).code
+            return random.choice(self.actions)
         else:
-            return np.argmax(self.q_table[pos])
+            return self.actions[np.argmax(self.q_table[pos])]
+
+    def __str__(self):
+        return f'{self.position}'
