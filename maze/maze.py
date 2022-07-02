@@ -1,6 +1,8 @@
 import random
 import numpy as np
 
+from const import REWARD, REWARD_OBSTACLE
+
 class Maze:
     def __init__(self, height: int, width: int, obstacle_ratio: float):
         self.height = height
@@ -22,8 +24,8 @@ class Maze:
     def set_reward_table(self):
         self.reward_table = np.array([[-1 for w in range(self.width)] for h in range(self.height)])
         for pos in self.obstacle:
-            self.reward_table[tuple(pos)] = -50
-        self.reward_table[tuple(self.reward_point)] = 200
+            self.reward_table[tuple(pos)] = REWARD_OBSTACLE
+        self.reward_table[tuple(self.reward_point)] = REWARD
     
     def get_obstacle(self) -> list:
         return self.obstacle

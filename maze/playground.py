@@ -4,7 +4,9 @@ import pygame.locals
 from maze import Maze
 from agent import Agent
 from action import ACTIONS
-from const import WIDTH, HEIGHT, RECT_SIZE,COLOR_BLACK, COLOR_GREEN, COLOR_NAVYBLUE, COLOR_SEASHELL
+from const import WIDTH, HEIGHT, RECT_SIZE, \
+    COLOR_BLACK, COLOR_GREEN, COLOR_NAVYBLUE, COLOR_SEASHELL, \
+    REWARD_OBSTACLE
 
 maze = Maze(height=HEIGHT, width=WIDTH, obstacle_ratio=0.1)
 maze.set_obstacle()
@@ -37,7 +39,7 @@ while True:
         direction = action.direction
         new_position = [agent.position[0] + direction[0], agent.position[1] + direction[1]]
         if maze.out_of_boundary(*new_position):
-            reward = -50
+            reward = REWARD_OBSTACLE
             agent.learn(agent.position, action.code, reward)
             print('game over!')
             break
