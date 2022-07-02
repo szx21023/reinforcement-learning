@@ -43,7 +43,7 @@ while True:
             break
 
         reward = reward_table[tuple(new_position)]
-        print(agent.position, action, reward)
+        print(agent, action, reward)
         agent.learn(agent.position, action.code, reward, new_position)
         agent.position = new_position
         if maze.reward_point == new_position:
