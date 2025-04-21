@@ -10,7 +10,7 @@ class Playground:
         self.rect_size = rect_size
 
         self.snake = Snake(width//2, height//2)
-        self.direction = random.randint(0, 3)
+        self.snake.direction = random.randint(0, 3)
 
         self.reward = [random.randint(0, width-1), random.randint(0, height-1)]
         self.score = 0
@@ -27,6 +27,15 @@ class Playground:
         # 設定螢幕的名稱
         pygame.display.set_caption("Snake")
         return screen
+
+    def reset_reward_position(self):
+        while True:
+            x = random.randint(0, self.width-1)
+            y = random.randint(0, self.height-1)
+            if [x, y] not in self.snake.body:
+                break
+
+        self.reward = [x, y]
 
     def _draw(self):
         self.screen.fill(COLOR_SEASHELL)

@@ -21,22 +21,21 @@ while True:
 
         if event.type == pygame.locals.KEYDOWN:
             if event.key == pygame.K_UP:
-                playground.direction = DIRECT_UP
+                playground.snake.set_direction(DIRECT_UP)
 
             elif event.key == pygame.K_DOWN:
-                playground.direction = DIRECT_DOWN
+                playground.snake.set_direction(DIRECT_DOWN)
 
             elif event.key == pygame.K_LEFT:
-                playground.direction = DIRECT_LEFT
+                playground.snake.set_direction(DIRECT_LEFT)
 
             elif event.key == pygame.K_RIGHT:
-                playground.direction = DIRECT_RIGHT
+                playground.snake.set_direction(DIRECT_RIGHT)
 
             else:
                 pass
 
     print(playground.snake, playground.reward)
-    playground.snake.set_direction(playground.direction)
     playground.snake.move()
     if not playground.is_in_the_place(*playground.snake.head):
         print("game over")
@@ -46,6 +45,6 @@ while True:
         playground.score += 1
         playground.snake.grow_up()
         print("grow up!")
-        playground.reward = [random.randint(0, width-1), random.randint(0, height-1)]
+        playground.reset_reward_position()
 
     playground._draw()
