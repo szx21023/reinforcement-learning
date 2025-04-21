@@ -16,7 +16,9 @@ class Playground:
         self.score = 0
         self.screen = self.init_pygame()
 
-    def is_in_the_place(self, x, y):
+    def is_in_the_boundary(self):
+        x = self.snake.head[0]
+        y = self.snake.head[1]
         return (x >= 0) and (x < self.width) and (y >= 0) and (y < self.height)
 
     def init_pygame(self):
@@ -39,6 +41,7 @@ class Playground:
 
     def _draw(self):
         self.screen.fill(COLOR_SEASHELL)
+        # draw the snake and the reward
         for coord in self.snake.body:
             pygame.draw.rect(self.screen, COLOR_NAVYBLUE, [coord[0]*self.rect_size, coord[1]*self.rect_size, self.rect_size, self.rect_size])
         pygame.draw.rect(self.screen, COLOR_NAVYBLUE, [self.reward[0]*self.rect_size, self.reward[1]*self.rect_size, self.rect_size, self.rect_size])
