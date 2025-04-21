@@ -37,11 +37,11 @@ while True:
 
     print(playground.snake, playground.reward)
     playground.snake.move()
-    if not playground.is_in_the_boundary():
+    if not playground.is_snake_in_the_boundary():
         print("game over")
         break
 
-    if playground.snake.head == playground.reward:
+    if playground.is_snake_get_the_reward():
         playground.score += 1
         playground.snake.grow_up()
         print("grow up!")

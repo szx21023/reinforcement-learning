@@ -14,21 +14,15 @@ class Playground:
 
         self.reward = [random.randint(0, width-1), random.randint(0, height-1)]
         self.score = 0
-        self.screen = self.init_pygame()
+        self.screen = self._init_pygame()
 
-    def is_in_the_boundary(self):
+    def is_snake_in_the_boundary(self):
         x = self.snake.head[0]
         y = self.snake.head[1]
         return (x >= 0) and (x < self.width) and (y >= 0) and (y < self.height)
 
-    def init_pygame(self):
-        # 初始化
-        pygame.init()
-        # 設定螢幕的大小
-        screen = pygame.display.set_mode((self.width*self.rect_size, self.height*self.rect_size))
-        # 設定螢幕的名稱
-        pygame.display.set_caption("Snake")
-        return screen
+    def is_snake_get_the_reward(self):
+        return self.snake.head == self.reward
 
     def reset_reward_position(self):
         while True:
@@ -38,6 +32,15 @@ class Playground:
                 break
 
         self.reward = [x, y]
+
+    def _init_pygame(self):
+        # 初始化
+        pygame.init()
+        # 設定螢幕的大小
+        screen = pygame.display.set_mode((self.width*self.rect_size, self.height*self.rect_size))
+        # 設定螢幕的名稱
+        pygame.display.set_caption("Snake")
+        return screen
 
     def _draw(self):
         self.screen.fill(COLOR_SEASHELL)
