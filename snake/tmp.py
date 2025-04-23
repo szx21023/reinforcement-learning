@@ -6,27 +6,38 @@ import torch.nn as nn
 import torch.optim as optim
 import pygame
 import time
+import cv2
 
-# --- 遊戲設定 ---
+# 遊戲設定
 WIDTH, HEIGHT = 40, 40
-BLOCK_SIZE = 4
+BLOCK_SIZE = 5
 SPEED = 20
 ACTIONS = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
 
-# --- DQN 模型 ---
-class DQN(nn.Module):
-    def __init__(self, input_dim, output_dim):
-        super(DQN, self).__init__()
-        self.fc = nn.Sequential(
-            nn.Linear(input_dim, 128),
+# CNN 模型
+class DQNCNN(nn.Module):
+    def __init__(self, output_dim):
+        super(DQNCNN, self).__init__()
+        self.conv = nn.Sequential(
+            nn.Conv2d(2, 16, 5, stride=2),  # 2 channels: gray + border
             nn.ReLU(),
-            nn.Linear(128, output_dim)
+            nn.Conv2d(16, 32, 5, stride=2),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, 3, stride=2),
+            nn.ReLU()
+        )
+        self.fc = nn.Sequential(
+            nn.Linear(64 * 8 * 8, 256),
+            nn.ReLU(),
+            nn.Linear(256, output_dim)
         )
 
     def forward(self, x):
+        x = self.conv(x)
+        x = x.view(x.size(0), -1)
         return self.fc(x)
 
-# --- Snake 遊戲環境 ---
+# Snake 遊戲環境
 class SnakeGame:
     def __init__(self):
         pygame.init()
@@ -37,8 +48,10 @@ class SnakeGame:
         self.reset()
 
     def reset(self):
-        self.head = [WIDTH // 2, HEIGHT // 2]
-        self.snake = [self.head[:], [self.head[0] - BLOCK_SIZE, self.head[1]]]
+        x = WIDTH // 2
+        y = HEIGHT // 2
+        self.head = [x, y]
+        self.snake = [[x, y], [x - BLOCK_SIZE, y]]
         self.direction = (BLOCK_SIZE, 0)
         self.food = self._place_food()
         self.frame = 0
@@ -60,17 +73,14 @@ class SnakeGame:
         return False
 
     def _draw(self, score):
-        self.display.fill((0, 0, 0))  # 背景黑
+        self.display.fill((0, 0, 0))
 
-        # 畫蛇
         for i, s in enumerate(self.snake):
             color = (255, 0, 0) if i == 0 else (0, 255, 0)
             pygame.draw.rect(self.display, color, pygame.Rect(s[0], s[1], BLOCK_SIZE, BLOCK_SIZE))
 
-        # 畫食物
         pygame.draw.rect(self.display, (255, 255, 0), pygame.Rect(self.food[0], self.food[1], BLOCK_SIZE, BLOCK_SIZE))
 
-        # 分數顯示
         score_text = self.font.render(f"Score: {score}", True, (255, 255, 255))
         self.display.blit(score_text, (10, 10))
 
@@ -78,34 +88,18 @@ class SnakeGame:
         self.clock.tick(SPEED)
 
     def _get_state(self):
-        head = self.head
-        point_l = [head[0] - BLOCK_SIZE, head[1]]
-        point_r = [head[0] + BLOCK_SIZE, head[1]]
-        point_u = [head[0], head[1] - BLOCK_SIZE]
-        point_d = [head[0], head[1] + BLOCK_SIZE]
+        raw_pixels = pygame.surfarray.array3d(self.display)
+        gray = np.mean(raw_pixels, axis=2)
+        resized = cv2.resize(gray, (84, 84)) / 255.0
 
-        dir_l = self.direction == (-BLOCK_SIZE, 0)
-        dir_r = self.direction == (BLOCK_SIZE, 0)
-        dir_u = self.direction == (0, -BLOCK_SIZE)
-        dir_d = self.direction == (0, BLOCK_SIZE)
+        border = np.zeros((84, 84), dtype=np.float32)
+        border[0, :] = 1
+        border[-1, :] = 1
+        border[:, 0] = 1
+        border[:, -1] = 1
 
-        danger_straight = self._is_collision()
-        danger_right = self._is_collision() if dir_u else False
-        danger_left = self._is_collision() if dir_d else False
-
-        food_dir = [
-            self.food[0] < head[0],  # food left
-            self.food[0] > head[0],  # food right
-            self.food[1] < head[1],  # food up
-            self.food[1] > head[1],  # food down
-        ]
-
-        state = [
-            danger_straight, danger_right, danger_left,
-            dir_l, dir_r, dir_u, dir_d,
-            *food_dir
-        ]
-        return np.array(state, dtype=int)
+        state = np.stack([resized, border], axis=0)
+        return state.astype(np.float32)
 
     def step(self, action):
         for event in pygame.event.get():
@@ -123,9 +117,9 @@ class SnakeGame:
             new_dir = clock_wise[(idx + 1) % 4]
         self.direction = new_dir
 
-        self.head[0] += self.direction[0]
-        self.head[1] += self.direction[1]
-        self.snake.insert(0, self.head[:])
+        new_head = [self.head[0] + self.direction[0], self.head[1] + self.direction[1]]
+        self.head = new_head
+        self.snake.insert(0, new_head)
 
         reward = 0
         done = False
@@ -143,7 +137,7 @@ class SnakeGame:
         self._draw(score=len(self.snake) - 2)
         return self._get_state(), reward, done
 
-# --- 訓練邏輯 ---
+# Agent
 class Agent:
     def __init__(self):
         self.gamma = 0.9
@@ -151,14 +145,14 @@ class Agent:
         self.epsilon_decay = 0.995
         self.lr = 0.001
         self.memory = deque(maxlen=1000)
-        self.model = DQN(11, 3)
+        self.model = DQNCNN(3)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.loss_fn = nn.MSELoss()
 
     def act(self, state):
         if random.random() < self.epsilon:
             return random.choice(ACTIONS)
-        state = torch.tensor(state, dtype=torch.float)
+        state = torch.tensor(state, dtype=torch.float).unsqueeze(0)
         with torch.no_grad():
             prediction = self.model(state)
         move = torch.argmax(prediction).item()
@@ -172,8 +166,8 @@ class Agent:
             return
         minibatch = random.sample(self.memory, batch_size)
         for state, action, reward, next_state, done in minibatch:
-            state_t = torch.tensor(state, dtype=torch.float)
-            next_state_t = torch.tensor(next_state, dtype=torch.float)
+            state_t = torch.tensor(state, dtype=torch.float).unsqueeze(0)
+            next_state_t = torch.tensor(next_state, dtype=torch.float).unsqueeze(0)
             action_index = ACTIONS.index(action)
 
             target = reward
@@ -182,7 +176,7 @@ class Agent:
 
             output = self.model(state_t)
             target_f = output.clone().detach()
-            target_f[action_index] = target
+            target_f[0][action_index] = target
 
             loss = self.loss_fn(output, target_f)
             self.optimizer.zero_grad()
@@ -192,7 +186,7 @@ class Agent:
         if self.epsilon > 0.1:
             self.epsilon *= self.epsilon_decay
 
-# --- 主訓練迴圈 ---
+# 訓練主程式
 if __name__ == "__main__":
     env = SnakeGame()
     agent = Agent()
@@ -209,7 +203,7 @@ if __name__ == "__main__":
             state = next_state
             total_reward += reward
 
-            time.sleep(0.05)  # 讓畫面可見，不會閃太快
+            time.sleep(0.05)
 
             if done:
                 print(f"Episode {ep}, Score: {total_reward}, Epsilon: {agent.epsilon:.2f}")
