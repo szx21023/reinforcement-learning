@@ -140,6 +140,7 @@ class SnakeGame:
 # Agent
 class Agent:
     def __init__(self):
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.gamma = 0.9
         self.epsilon = 1.0
         self.epsilon_decay = 0.995
@@ -152,7 +153,7 @@ class Agent:
     def act(self, state):
         if random.random() < self.epsilon:
             return random.choice(ACTIONS)
-        state = torch.tensor(state, dtype=torch.float).unsqueeze(0)
+        state = torch.tensor(state, dtype=torch.float).unsqueeze(0).to(self.device)
         with torch.no_grad():
             prediction = self.model(state)
         move = torch.argmax(prediction).item()
@@ -166,8 +167,8 @@ class Agent:
             return
         minibatch = random.sample(self.memory, batch_size)
         for state, action, reward, next_state, done in minibatch:
-            state_t = torch.tensor(state, dtype=torch.float).unsqueeze(0)
-            next_state_t = torch.tensor(next_state, dtype=torch.float).unsqueeze(0)
+            state_t = torch.tensor(state, dtype=torch.float).unsqueeze(0).to(self.device)
+            next_state_t = torch.tensor(next_state, dtype=torch.float).unsqueeze(0).to(self.device)
             action_index = ACTIONS.index(action)
 
             target = reward
@@ -190,6 +191,7 @@ class Agent:
 if __name__ == "__main__":
     env = SnakeGame()
     agent = Agent()
+    agent.model.load_state_dict(torch.load("./model.pth", map_location=torch.device('cpu')))
     episodes = 1000
 
     for ep in range(episodes):
