@@ -1,6 +1,12 @@
 import gymnasium as gym
 import cv2
 import time
+import torch
+
+from main import ACTIONS, DQNAgent, preprocess
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+agent = DQNAgent(num_actions=len(ACTIONS), device=device, pretrain_model_path='./car_dqn_episode60.pth')
 
 # 建立環境，使用 rgb_array 模式
 env = gym.make("CarRacing-v3", render_mode="rgb_array")
@@ -18,8 +24,9 @@ for _ in range(300):
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-    # 隨機動作
-    action = env.action_space.sample()
+    state = preprocess(obs)
+    action_idx = agent.act(state)
+    action = ACTIONS[action_idx]
     obs, reward, terminated, truncated, info = env.step(action)
 
     if terminated or truncated:
