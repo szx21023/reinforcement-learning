@@ -45,7 +45,7 @@ def preprocess(obs):
 
 # --- Agent 類別 ---
 class DQNAgent:
-    def __init__(self, num_actions, device, gamma=0.99, lr=1e-4):
+    def __init__(self, num_actions, device, gamma=0.99, lr=1e-4, pretrain_model_path=None):
         self.num_actions = num_actions
         self.device = device
         self.gamma = gamma
@@ -53,6 +53,8 @@ class DQNAgent:
         self.epsilon_decay = 0.995
         self.epsilon_min = 0.1
         self.model = DQN(num_actions).to(device)
+        if pretrain_model_path:
+            self.model.load_state_dict(torch.load(pretrain_model_path, map_location=self.device))
         self.target_model = DQN(num_actions).to(device)
         self.target_model.load_state_dict(self.model.state_dict())
         self.optimizer = optim.Adam(self.model.parameters(), lr=lr)
