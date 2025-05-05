@@ -2,17 +2,20 @@ import gymnasium as gym
 import cv2
 import time
 import torch
+import numpy as np
 
 from main import ACTIONS, DQNAgent, preprocess
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-agent = DQNAgent(num_actions=len(ACTIONS), device=device, pretrain_model_path='./car_dqn_episode60.pth')
+pretrain_model_path = None#"./car_dqn_episode240.pth"
+agent = DQNAgent(num_actions=len(ACTIONS), device=device, pretrain_model_path=pretrain_model_path)
 
 # 建立環境，使用 rgb_array 模式
 env = gym.make("CarRacing-v3", render_mode="rgb_array")
 obs, info = env.reset()
 
-for _ in range(300):
+for _ in range(30000):
+    print(env.unwrapped.car.hull.linearVelocity)
     # 取得畫面 frame（rgb）
     frame = env.render()
 
@@ -25,11 +28,12 @@ for _ in range(300):
         break
 
     state = preprocess(obs)
-    action_idx = agent.act(state)
+    speed = np.linalg.norm(env.unwrapped.car.hull.linearVelocity)
+    action_idx = agent.act(state, speed)
     action = ACTIONS[action_idx]
     obs, reward, terminated, truncated, info = env.step(action)
 
-    if terminated or truncated:
+    if terminated:# or truncated:
         break
 
 env.close()
