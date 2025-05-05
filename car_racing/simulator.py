@@ -6,13 +6,14 @@ import torch
 from main import ACTIONS, DQNAgent, preprocess
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-agent = DQNAgent(num_actions=len(ACTIONS), device=device, pretrain_model_path='./car_dqn_episode60.pth')
+agent = DQNAgent(num_actions=len(ACTIONS), device=device, pretrain_model_path='./car_dqn_episode120.pth')
+agent.epsilon = 0.05  # 設定 epsilon 為 0.05，這樣 agent 就不會隨機選擇行動了
 
 # 建立環境，使用 rgb_array 模式
 env = gym.make("CarRacing-v3", render_mode="rgb_array")
 obs, info = env.reset()
 
-for _ in range(300):
+for _ in range(30000):
     # 取得畫面 frame（rgb）
     frame = env.render()
 
@@ -29,7 +30,7 @@ for _ in range(300):
     action = ACTIONS[action_idx]
     obs, reward, terminated, truncated, info = env.step(action)
 
-    if terminated or truncated:
+    if terminated:# or truncated:
         break
 
 env.close()
